@@ -111,6 +111,10 @@ setup(
                 "src/util/settings.cpp",
                 "src/util/Undistort.cpp",
                 "src/util/globalCalib.cpp",
+
+                # Dummy IO files, so that the symbols are defined.
+                "src/IOWrapper/ImageDisplay_dummy.cpp",
+                "src/IOWrapper/ImageRW_dummy.cpp",
                 
                 # Swig
                 "dso.i"
