@@ -69,8 +69,7 @@ include_dirs = {
     str(cholmod_include),
     str(csparse_include),
     'src',
-    'thirdparty/Sophus',
-    'thirdparty/sse2neon'
+    'thirdparty/Sophus'
 }
 library_dirs = {
     str(boost_lib),
