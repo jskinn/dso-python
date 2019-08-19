@@ -1,7 +1,9 @@
 # DSO: Direct Sparse Odometry - Python
 
-Direct Sparse Odometry, bound to python using SWIG ([http://swig.org/](http://swig.org/).
-Forked from the original repository, with some minor changes to assist the API.
+Direct Sparse Odometry, bound to python using SWIG ([http://swig.org/](http://swig.org/)).
+Copied from the original repository ([https://github.com/JakobEngel/dso](https://github.com/JakobEngel/dso)), with some minor changes to assist the API.
+
+(Not actually a fork, because it is designed to do a different thing, building a python library, rather than a C++ library).
 
 For more information see
 [https://vision.in.tum.de/dso](https://vision.in.tum.de/dso)
