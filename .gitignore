@@ -1,10 +1,41 @@
+# C/C++ outputs
+*.so
+*.o
+*.a
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# IDE
 *.pro
 *.pro.user
 *.pro.user*
-build*
-build-*
-*.o
-*.so
-*.a
-*.so.*
+.vscode
+
+# SWIG outputs
+dso.py
+dso_wrap.cpp
+
+# Third party outputs
 thirdparty/libzip-1.1.1
