@@ -1,4 +1,7 @@
-# DSO: Direct Sparse Odometry
+# DSO: Direct Sparse Odometry - Python
+
+Direct Sparse Odometry, bound to python using SWIG ([http://swig.org/](http://swig.org/).
+Forked from the original repository, with some minor changes to assist the API.
 
 For more information see
 [https://vision.in.tum.de/dso](https://vision.in.tum.de/dso)
@@ -15,11 +18,14 @@ Get some datasets from [https://vision.in.tum.de/mono-dataset](https://vision.in
 
 #### 2.1 Required Dependencies
 
-##### suitesparse and eigen3 (required).
-Required. Install with
+##### Boost, suitesparse, eigen3, and numpy (required).
+Required. Install with apt:
 
-		sudo apt-get install libsuitesparse-dev libeigen3-dev libboost-all-dev
+	sudo apt-get install libsuitesparse-dev libeigen3-dev libboost-all-dev
 
+OR, install with conda:
+
+	conda install -c conda-forge boost suitesparse eigen numpy
 
 
 #### 2.2 Optional Dependencies
