@@ -42,6 +42,8 @@ class PhotometricUndistorter
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	PhotometricUndistorter(std::string file, std::string noiseImage, std::string vignetteImage, int w_, int h_);
+	PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImageB* vignette_image);
+	PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image);
 	~PhotometricUndistorter();
 
 	// removes readout noise, and converts to irradiance.
@@ -70,9 +72,8 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	virtual ~Undistort();
 
-	virtual void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const = 0;
+	virtual void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const {};
 
-	
 	inline const Mat33 getK() const {return K;};
 	inline const Eigen::Vector2i getSize() const {return Eigen::Vector2i(w,h);};
 	inline const VecX getOriginalParameter() const {return parsOrg;};
@@ -84,10 +85,24 @@ public:
 	static Undistort* getUndistorterForFile(std::string configFilename, std::string gammaFilename, std::string vignetteFilename);
 
 	void loadPhotometricCalibration(std::string file, std::string noiseImage, std::string vignetteImage);
+	void makePhotometricCalibration(std::vector<float> gamma, MinimalImageB* vignette_image);
+	void makePhotometricCalibration(std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image);
 
 	PhotometricUndistorter* photometricUndist;
 
+	// Rectification modes
+	static const int RECT_CROP = 0;
+	static const int RECT_FULL = 1;
+	static const int RECT_NONE = 2;
+
 protected:
+	// Construct from a file
+	Undistort(const char* configFileName, int nPars, std::string prefix = "", PhotometricUndistorter* photometricUndist = 0);
+
+	// Construct from existing parameters
+	Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, int outWidth, int outHeight, PhotometricUndistorter* photometricUndist = 0);
+	Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight, PhotometricUndistorter* photometricUndist = 0);
+
     int w, h, wOrg, hOrg, wUp, hUp;
     int upsampleUndistFactor;
 	Mat33 K;
@@ -102,8 +117,6 @@ protected:
 
 	void makeOptimalK_crop();
 	void makeOptimalK_full();
-
-	void readFromFile(const char* configFileName, int nPars, std::string prefix = "");
 };
 
 class UndistortFOV : public Undistort
@@ -111,39 +124,75 @@ class UndistortFOV : public Undistort
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+	// Create from file
     UndistortFOV(const char* configFileName, bool noprefix);
+
+	// Create from existing parameters
+	UndistortFOV(double fx, double fy, double cx, double cy, double omega, int in_width, int in_height, int rectification_mode, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+	UndistortFOV(double fx, double fy, double cx, double cy, double omega, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+
 	~UndistortFOV();
 	void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
+	//static Undistort* make(double fx, double fy, double cx, double cy, double omega, int in_width, int in_height, bool crop, int out_width, int out_height);
 
+protected:
+	static VecX makeParams(double fx, double fy, double cx, double cy, double omega);
 };
 
 class UndistortRadTan : public Undistort
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+	// Create from file
     UndistortRadTan(const char* configFileName, bool noprefix);
+
+	// Create from existing parameters
+	UndistortRadTan(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rectification_mode, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+	UndistortRadTan(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+
     ~UndistortRadTan();
     void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
 
+protected:
+	static VecX makeParams(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2);
 };
 
 class UndistortEquidistant : public Undistort
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+	// Create from file
     UndistortEquidistant(const char* configFileName, bool noprefix);
-    ~UndistortEquidistant();
+
+	// Create from existing parameters
+	UndistortEquidistant(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rectification_mode, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+	UndistortEquidistant(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+
+	~UndistortEquidistant();
     void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
 
+protected:
+	static VecX makeParams(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2);
 };
 
 class UndistortPinhole : public Undistort
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+	// Create from file
     UndistortPinhole(const char* configFileName, bool noprefix);
+
+	// Create from existing parameters
+	UndistortPinhole(double fx, double fy, double cx, double cy, int in_width, int in_height, int rectification_mode, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+	UndistortPinhole(double fx, double fy, double cx, double cy, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
 	~UndistortPinhole();
 	void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
+
+protected:
+	static VecX makeParams(double fx, double fy, double cx, double cy);
 
 private:
 	float inputCalibration[8];
@@ -153,10 +202,18 @@ class UndistortKB : public Undistort
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+	// Create from file
     UndistortKB(const char* configFileName, bool noprefix);
+
+	// Create from existing parameters
+	UndistortKB(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rectification_mode, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
+	UndistortKB(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height, PhotometricUndistorter* photometricUndist = 0);
 	~UndistortKB();
 	void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
 
+protected:
+	static VecX makeParams(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2);
 };
 
 }

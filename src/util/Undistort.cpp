@@ -177,6 +177,142 @@ PhotometricUndistorter::PhotometricUndistorter(
 	printf("Successfully read photometric calibration!\n");
 	valid = true;
 }
+PhotometricUndistorter::PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImageB* vignette_image) :
+	output(new ImageAndExposure(width, height)), w(width), h(height), valid(false)
+{
+	vignetteMap=0;
+	vignetteMapInv=0;
+
+	// read gamma into G.
+	{
+        GDepth = gamma.size();
+
+        if(GDepth < 256)
+        {
+            printf("PhotometricUndistorter: invalid format! got %d entries in first line, expected at least 256!\n",(int)gamma.size());
+            throw std::exception();
+        }
+
+
+        for(int i=0;i<GDepth;i++) G[i] = gamma[i];
+
+        for(int i=0;i<GDepth-1;i++)
+		{
+			if(G[i+1] <= G[i])
+			{
+				printf("PhotometricUndistorter: G invalid! it has to be strictly increasing, but it isnt!\n");
+				throw std::exception();
+			}
+		}
+
+		float min=G[0];
+        float max=G[GDepth-1];
+        for(int i=0;i<GDepth;i++) G[i] = 255.0 * (G[i] - min) / (max-min);			// make it to 0..255 => 0..255.
+	}
+	if(setting_photometricCalibration==0)
+	{
+        for(int i=0;i<GDepth;i++) G[i]=255.0f*i/(float)(GDepth-1);
+	}
+
+	// Copy the vignette image into vignetteMap
+	vignetteMap = new float[w*h];
+	vignetteMapInv = new float[w*h];
+
+	if(vignette_image->w != w ||vignette_image->h != h)
+	{
+		printf("PhotometricUndistorter: Invalid vignette image size! got %d x %d, expected %d x %d\n",
+				vignette_image->w, vignette_image->h, w, h);
+		throw std::exception();
+	}
+
+	float maxV=0;
+	for(int i=0;i<w*h;i++)
+	{
+		if(vignette_image->at(i) > maxV)
+		{
+			maxV = vignette_image->at(i);
+		}
+	}
+	for(int i=0;i<w*h;i++)
+	{
+		vignetteMap[i] = vignette_image->at(i) / maxV;
+	}
+	for(int i=0;i<w*h;i++)
+	{
+		vignetteMapInv[i] = 1.0f / vignetteMap[i];
+	}
+
+	printf("Successfully read photometric calibration!\n");
+	valid = true;
+}
+PhotometricUndistorter::PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image) :
+	output(new ImageAndExposure(width, height)), w(width), h(height), valid(false)
+{
+	vignetteMap=0;
+	vignetteMapInv=0;
+
+	// read gamma into G.
+	{
+        GDepth = gamma.size();
+
+        if(GDepth < 256)
+        {
+            printf("PhotometricUndistorter: invalid format! got %d entries in first line, expected at least 256!\n",(int)gamma.size());
+            throw std::exception();
+        }
+
+
+        for(int i=0;i<GDepth;i++) G[i] = gamma[i];
+
+        for(int i=0;i<GDepth-1;i++)
+		{
+			if(G[i+1] <= G[i])
+			{
+				printf("PhotometricUndistorter: G invalid! it has to be strictly increasing, but it isnt!\n");
+				throw std::exception();
+			}
+		}
+
+		float min=G[0];
+        float max=G[GDepth-1];
+        for(int i=0;i<GDepth;i++) G[i] = 255.0 * (G[i] - min) / (max-min);			// make it to 0..255 => 0..255.
+	}
+	if(setting_photometricCalibration==0)
+	{
+        for(int i=0;i<GDepth;i++) G[i]=255.0f*i/(float)(GDepth-1);
+	}
+
+	// Copy the vignette image into vignetteMap
+	vignetteMap = new float[w*h];
+	vignetteMapInv = new float[w*h];
+
+	if(vignette_image->w != w ||vignette_image->h != h)
+	{
+		printf("PhotometricUndistorter: Invalid vignette image size! got %d x %d, expected %d x %d\n",
+				vignette_image->w, vignette_image->h, w, h);
+		throw std::exception();
+	}
+
+	float maxV=0;
+	for(int i=0;i<w*h;i++)
+	{
+		if(vignette_image->at(i) > maxV)
+		{
+			maxV = vignette_image->at(i);
+		}
+	}
+	for(int i=0;i<w*h;i++)
+	{
+		vignetteMap[i] = vignette_image->at(i) / maxV;
+	}
+	for(int i=0;i<w*h;i++)
+	{
+		vignetteMapInv[i] = 1.0f / vignetteMap[i];
+	}
+
+	printf("Successfully read photometric calibration!\n");
+	valid = true;
+}
 PhotometricUndistorter::~PhotometricUndistorter()
 {
 	if(vignetteMap != 0) delete[] vignetteMap;
@@ -380,6 +516,16 @@ Undistort* Undistort::getUndistorterForFile(std::string configFilename, std::str
 void Undistort::loadPhotometricCalibration(std::string file, std::string noiseImage, std::string vignetteImage)
 {
 	photometricUndist = new PhotometricUndistorter(file, noiseImage, vignetteImage,getOriginalSize()[0], getOriginalSize()[1]);
+}
+
+void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImageB* vignette_image)
+{
+	photometricUndist = new PhotometricUndistorter(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
+}
+
+void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image)
+{
+	photometricUndist = new PhotometricUndistorter(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
 }
 
 template<typename T>
@@ -713,11 +859,9 @@ void Undistort::makeOptimalK_full()
 	assert(false);
 }
 
-void Undistort::readFromFile(const char* configFileName, int nPars, std::string prefix)
+Undistort::Undistort(const char* configFileName, int nPars, std::string prefix, PhotometricUndistorter* photometricUndist) :
+	photometricUndist(photometricUndist), valid(false), passthrough(false)
 {
-	photometricUndist=0;
-	valid = false;
-	passthrough=false;
 	remapX = 0;
 	remapY = 0;
 	
@@ -944,23 +1088,261 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 
 	valid = true;
 
-
-
-
 	printf("\nRectified Kamera Matrix:\n");
 	std::cout << K << "\n\n";
 
 }
 
-
-UndistortFOV::UndistortFOV(const char* configFileName, bool noprefix)
+Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, int outWidth, int outHeight, PhotometricUndistorter* photometricUndist) :
+	photometricUndist(photometricUndist), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
 {
-    printf("Creating FOV undistorter\n");
+	remapX = 0;
+	remapY = 0;
 
-    if(noprefix)
-        readFromFile(configFileName, 5);
-    else
-        readFromFile(configFileName, 5, "FOV ");
+    if(parsOrg[2] < 1 && parsOrg[3] < 1)
+    {
+        printf("\n\nFound fx=%f, fy=%f, cx=%f, cy=%f.\n I'm assuming this is the \"relative\" calibration file format,"
+               "and will rescale this by image width / height to fx=%f, fy=%f, cx=%f, cy=%f.\n\n",
+               parsOrg[0], parsOrg[1], parsOrg[2], parsOrg[3],
+               parsOrg[0] * wOrg, parsOrg[1] * hOrg, parsOrg[2] * wOrg - 0.5, parsOrg[3] * hOrg - 0.5 );
+
+        // rescale and substract 0.5 offset.
+        // the 0.5 is because I'm assuming the calibration is given such that the pixel at (0,0)
+        // contains the integral over intensity over [0,0]-[1,1], whereas I assume the pixel (0,0)
+        // to contain a sample of the intensity ot [0,0], which is best approximated by the integral over
+        // [-0.5,-0.5]-[0.5,0.5]. Thus, the shift by -0.5.
+        parsOrg[0] = parsOrg[0] * wOrg;
+        parsOrg[1] = parsOrg[1] * hOrg;
+        parsOrg[2] = parsOrg[2] * wOrg - 0.5;
+        parsOrg[3] = parsOrg[3] * hOrg - 0.5;
+    }
+
+	// Configure the output dimensions
+	if(benchmarkSetting_width != 0 && benchmarkSetting_width != w)
+	{
+		w = benchmarkSetting_width;
+		if(rectificationMode == Undistort::RECT_NONE)
+		{
+			rectificationMode = Undistort::RECT_CROP;  // crop instead of none, since probably resolution changed.
+		}
+	}
+	if(benchmarkSetting_height != 0 && benchmarkSetting_height != h)
+	{
+		h = benchmarkSetting_height;
+		if(rectificationMode == Undistort::RECT_NONE)
+		{
+			rectificationMode = Undistort::RECT_CROP;  // crop instead of none, since probably resolution changed.
+		}
+	}
+	printf("Output resolution: %d %d\n", w, h);
+
+    remapX = new float[w * h];
+    remapY = new float[w * h];
+
+	// Build K based on the rectification mode
+	if(rectificationMode == Undistort::RECT_CROP)
+	{
+		makeOptimalK_crop();
+	}
+	else if(rectificationMode == Undistort::RECT_FULL)
+	{
+		makeOptimalK_full();
+	}
+	else if(rectificationMode == Undistort::RECT_NONE)
+	{
+		if(w != wOrg || h != hOrg)
+		{
+			printf("ERROR: rectification mode none requires input and output dimenstions to match!\n\n");
+			throw std::exception();
+		}
+		K.setIdentity();
+        K(0,0) = parsOrg[0];
+        K(1,1) = parsOrg[1];
+        K(0,2) = parsOrg[2];
+        K(1,2) = parsOrg[3];
+		passthrough = true;
+	}
+	else
+	{
+		printf("ERROR: Unrecognised rectification mode, pass one of the constants.\n");
+		throw std::exception();
+	}
+
+	if(benchmarkSetting_fxfyfac != 0)
+	{
+		K(0,0) = fmax(benchmarkSetting_fxfyfac, (float)K(0,0));
+		K(1,1) = fmax(benchmarkSetting_fxfyfac, (float)K(1,1));
+        passthrough = false; // cannot pass through when fx / fy have been overwritten.
+	}
+
+
+	for(int y=0;y<h;y++)
+	{
+		for(int x=0;x<w;x++)
+		{
+			remapX[x+y*w] = x;
+			remapY[x+y*w] = y;
+		}
+	}
+
+	distortCoordinates(remapX, remapY, remapX, remapY, h*w);
+
+	for(int y=0;y<h;y++)
+	{
+		for(int x=0;x<w;x++)
+		{
+			// make rounding resistant.
+			float ix = remapX[x+y*w];
+			float iy = remapY[x+y*w];
+
+			if(ix == 0) ix = 0.001;
+			if(iy == 0) iy = 0.001;
+			if(ix == wOrg-1) ix = wOrg-1.001;
+			if(iy == hOrg-1) ix = hOrg-1.001;
+
+			if(ix > 0 && iy > 0 && ix < wOrg-1 &&  iy < wOrg-1)
+			{
+				remapX[x+y*w] = ix;
+				remapY[x+y*w] = iy;
+			}
+			else
+			{
+				remapX[x+y*w] = -1;
+				remapY[x+y*w] = -1;
+			}
+		}
+	}
+	valid = true;
+
+	printf("\nRectified Camera Matrix:\n");
+	std::cout << K << "\n\n";
+}
+
+Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight, PhotometricUndistorter* photometricUndist) :
+	photometricUndist(photometricUndist), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
+{
+	remapX = 0;
+	remapY = 0;
+
+    if(parsOrg[2] < 1 && parsOrg[3] < 1)
+    {
+        printf("\n\nFound fx=%f, fy=%f, cx=%f, cy=%f.\n I'm assuming this is the \"relative\" calibration file format,"
+               "and will rescale this by image width / height to fx=%f, fy=%f, cx=%f, cy=%f.\n\n",
+               parsOrg[0], parsOrg[1], parsOrg[2], parsOrg[3],
+               parsOrg[0] * wOrg, parsOrg[1] * hOrg, parsOrg[2] * wOrg - 0.5, parsOrg[3] * hOrg - 0.5 );
+
+        // rescale and substract 0.5 offset.
+        // the 0.5 is because I'm assuming the calibration is given such that the pixel at (0,0)
+        // contains the integral over intensity over [0,0]-[1,1], whereas I assume the pixel (0,0)
+        // to contain a sample of the intensity ot [0,0], which is best approximated by the integral over
+        // [-0.5,-0.5]-[0.5,0.5]. Thus, the shift by -0.5.
+        parsOrg[0] = parsOrg[0] * wOrg;
+        parsOrg[1] = parsOrg[1] * hOrg;
+        parsOrg[2] = parsOrg[2] * wOrg - 0.5;
+        parsOrg[3] = parsOrg[3] * hOrg - 0.5;
+    }
+
+	// Configure the output dimensions
+	if(benchmarkSetting_width != 0 && benchmarkSetting_width != w)
+	{
+		w = benchmarkSetting_width;
+	}
+	if(benchmarkSetting_height != 0 && benchmarkSetting_height != h)
+	{
+		h = benchmarkSetting_height;
+	}
+	printf("Output resolution: %d %d\n", w, h);
+
+    remapX = new float[w * h];
+    remapY = new float[w * h];
+
+	// Build K based on the rectification mode
+	if(rectCx > 1 || rectCy > 1)
+	{
+		printf("\n\n\nWARNING: given output calibration (%f %f %f %f) seems wrong. It needs to be relative to image width / height!\n\n\n",
+				rectFx, rectFy, rectCx, rectCy);
+	}
+
+	K.setIdentity();
+	K(0,0) = rectFx * w;
+	K(1,1) = rectFy * h;
+	K(0,2) = rectCx * w - 0.5;
+	K(1,2) = rectCy * h - 0.5;
+
+	if(benchmarkSetting_fxfyfac != 0)
+	{
+		K(0,0) = fmax(benchmarkSetting_fxfyfac, (float)K(0,0));
+		K(1,1) = fmax(benchmarkSetting_fxfyfac, (float)K(1,1));
+        passthrough = false; // cannot pass through when fx / fy have been overwritten.
+	}
+
+
+	for(int y=0;y<h;y++)
+	{
+		for(int x=0;x<w;x++)
+		{
+			remapX[x+y*w] = x;
+			remapY[x+y*w] = y;
+		}
+	}
+
+	distortCoordinates(remapX, remapY, remapX, remapY, h*w);
+
+	for(int y=0;y<h;y++)
+	{
+		for(int x=0;x<w;x++)
+		{
+			// make rounding resistant.
+			float ix = remapX[x+y*w];
+			float iy = remapY[x+y*w];
+
+			if(ix == 0) ix = 0.001;
+			if(iy == 0) iy = 0.001;
+			if(ix == wOrg-1) ix = wOrg-1.001;
+			if(iy == hOrg-1) ix = hOrg-1.001;
+
+			if(ix > 0 && iy > 0 && ix < wOrg-1 &&  iy < wOrg-1)
+			{
+				remapX[x+y*w] = ix;
+				remapY[x+y*w] = iy;
+			}
+			else
+			{
+				remapX[x+y*w] = -1;
+				remapY[x+y*w] = -1;
+			}
+		}
+	}
+	valid = true;
+
+	printf("\nRectified Camera Matrix:\n");
+	std::cout << K << "\n\n";
+}
+
+
+UndistortFOV::UndistortFOV(const char* configFileName, bool noprefix) :
+	Undistort(configFileName, 5, noprefix ? "" : "FOV ")
+{
+}
+UndistortFOV::UndistortFOV(
+	double fx, double fy, double cx, double cy, double omega,
+	int in_width, int in_height,
+	int rectification_mode,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rectification_mode, out_width, out_height, photometricUndist)
+{
+}
+UndistortFOV::UndistortFOV(
+	double fx, double fy, double cx, double cy, double omega,
+	int in_width, int in_height,
+	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+{
 }
 UndistortFOV::~UndistortFOV()
 {
@@ -1003,20 +1385,45 @@ void UndistortFOV::distortCoordinates(float* in_x, float* in_y, float* out_x, fl
 		out_y[i] = iy;
 	}
 }
-
-
-
-
-
-
-UndistortRadTan::UndistortRadTan(const char* configFileName, bool noprefix)
+VecX UndistortFOV::makeParams(double fx, double fy, double cx, double cy, double omega)
 {
-    printf("Creating RadTan undistorter\n");
+    VecX params(5);
+    params[0] = fx;
+    params[1] = fy;
+    params[2] = cx;
+    params[3] = cy;
+    params[4] = omega;
+    return params;
+}
 
-    if(noprefix)
-        readFromFile(configFileName, 8);
-    else
-        readFromFile(configFileName, 8,"RadTan ");
+
+
+
+
+
+UndistortRadTan::UndistortRadTan(const char* configFileName, bool noprefix) :
+	Undistort(configFileName, 8, noprefix ? "" : "RadTan ")
+{
+}
+UndistortRadTan::UndistortRadTan(
+	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
+	int in_width, int in_height,
+	int rectification_mode,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height, photometricUndist)
+{
+}
+UndistortRadTan::UndistortRadTan(
+	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
+	int in_width, int in_height,
+	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+{
 }
 UndistortRadTan::~UndistortRadTan()
 {
@@ -1066,17 +1473,45 @@ void UndistortRadTan::distortCoordinates(float* in_x, float* in_y, float* out_x,
 
 
 }
-
-
-
-UndistortEquidistant::UndistortEquidistant(const char* configFileName, bool noprefix)
+VecX UndistortRadTan::makeParams(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2)
 {
-    printf("Creating Equidistant undistorter\n");
+	VecX params(8);
+	params[0] = fx;
+    params[1] = fy;
+    params[2] = cx;
+    params[3] = cy;
+	params[4] = k1;
+	params[5] = k2;
+	params[6] = r1;
+	params[7] = r2;
+	return params;
+}
 
-    if(noprefix)
-        readFromFile(configFileName, 8);
-    else
-        readFromFile(configFileName, 8,"EquiDistant ");
+
+
+UndistortEquidistant::UndistortEquidistant(const char* configFileName, bool noprefix) :
+	Undistort(configFileName, 8, noprefix ? "" : "EquiDistant ")
+{
+}
+UndistortEquidistant::UndistortEquidistant(
+	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
+	int in_width, int in_height,
+	int rectification_mode,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height, photometricUndist)
+{
+}
+UndistortEquidistant::UndistortEquidistant(
+	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
+	int in_width, int in_height,
+	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+{
 }
 UndistortEquidistant::~UndistortEquidistant()
 {
@@ -1125,17 +1560,45 @@ void UndistortEquidistant::distortCoordinates(float* in_x, float* in_y, float* o
         out_y[i] = oy;
     }
 }
-
-
-
-UndistortKB::UndistortKB(const char* configFileName, bool noprefix)
+VecX UndistortEquidistant::makeParams(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2)
 {
-	printf("Creating KannalaBrandt undistorter\n");
+	VecX params(8);
+	params[0] = fx;
+    params[1] = fy;
+    params[2] = cx;
+    params[3] = cy;
+	params[4] = k1;
+	params[5] = k2;
+	params[6] = r1;
+	params[7] = r2;
+	return params;
+}
 
-    if(noprefix)
-        readFromFile(configFileName, 8);
-    else
-        readFromFile(configFileName, 8,"KannalaBrandt ");
+
+
+UndistortKB::UndistortKB(const char* configFileName, bool noprefix) :
+	Undistort(configFileName, 8, noprefix ? "" : "KannalaBrandt ")
+{
+}
+UndistortKB::UndistortKB(
+	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
+	int in_width, int in_height,
+	int rectification_mode,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height, photometricUndist)
+{
+}
+UndistortKB::UndistortKB(
+	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
+	int in_width, int in_height,
+	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+{
 }
 UndistortKB::~UndistortKB()
 {
@@ -1189,18 +1652,47 @@ void UndistortKB::distortCoordinates(float* in_x, float* in_y, float* out_x, flo
 	    }
 	}
 }
-
-
-
-
-
-UndistortPinhole::UndistortPinhole(const char* configFileName, bool noprefix)
+VecX UndistortKB::makeParams(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2)
 {
-    if(noprefix)
-        readFromFile(configFileName, 5);
-    else
-        readFromFile(configFileName, 5,"Pinhole ");
+	VecX params(8);
+	params[0] = fx;
+    params[1] = fy;
+    params[2] = cx;
+    params[3] = cy;
+	params[4] = k1;
+	params[5] = k2;
+	params[6] = r1;
+	params[7] = r2;
+	return params;
+}
 
+
+
+
+
+UndistortPinhole::UndistortPinhole(const char* configFileName, bool noprefix) :
+	Undistort(configFileName, 5, noprefix ? "" : "Pinhole ")
+{
+}
+UndistortPinhole::UndistortPinhole(
+	double fx, double fy, double cx, double cy,
+	int in_width, int in_height,
+	int rectification_mode,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rectification_mode, out_width, out_height, photometricUndist)
+{
+}
+UndistortPinhole::UndistortPinhole(
+	double fx, double fy, double cx, double cy,
+	int in_width, int in_height,
+	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	int out_width, int out_height,
+	PhotometricUndistorter* photometricUndist
+) :
+	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+{
 }
 UndistortPinhole::~UndistortPinhole()
 {
@@ -1230,6 +1722,15 @@ void UndistortPinhole::distortCoordinates(float* in_x, float* in_y, float* out_x
 		out_x[i] = ix;
 		out_y[i] = iy;
 	}
+}
+VecX UndistortPinhole::makeParams(double fx, double fy, double cx, double cy)
+{
+	VecX params(5);
+	params[0] = fx;
+    params[1] = fy;
+    params[2] = cx;
+    params[3] = cy;
+	return params;
 }
 
 
