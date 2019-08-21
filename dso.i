@@ -53,6 +53,10 @@
 %ignore dso::Undistort::photometricUndist;
 %ignore dso::Undistort::undistort;
 %ignore dso::Undistort::makePhotometricCalibration;
+%rename dso::Undistort::distortCoordinates distort_coordinates;
+%rename dso::Undistort::getUndistorterForFile get_undistorter_for_file;
+%rename dso::Undistort::isValid is_valid;
+%rename dso::Undistort::loadPhotometricCalibration load_photometric_calibration;
 
 // Hide a bunch of the Output3DWrapper API for now
 %ignore dso::IOWrap::Output3DWrapper::publishGraph;
