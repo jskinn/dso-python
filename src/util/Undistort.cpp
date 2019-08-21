@@ -515,17 +515,17 @@ Undistort* Undistort::getUndistorterForFile(std::string configFilename, std::str
 
 void Undistort::loadPhotometricCalibration(std::string file, std::string noiseImage, std::string vignetteImage)
 {
-	photometricUndist = new PhotometricUndistorter(file, noiseImage, vignetteImage,getOriginalSize()[0], getOriginalSize()[1]);
+	photometricUndist = std::make_shared<PhotometricUndistorter>(file, noiseImage, vignetteImage,getOriginalSize()[0], getOriginalSize()[1]);
 }
 
 void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImageB* vignette_image)
 {
-	photometricUndist = new PhotometricUndistorter(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
+	photometricUndist = std::make_shared<PhotometricUndistorter>(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
 }
 
 void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image)
 {
-	photometricUndist = new PhotometricUndistorter(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
+	photometricUndist = std::make_shared<PhotometricUndistorter>(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
 }
 
 template<typename T>
@@ -859,8 +859,8 @@ void Undistort::makeOptimalK_full()
 	assert(false);
 }
 
-Undistort::Undistort(const char* configFileName, int nPars, std::string prefix, PhotometricUndistorter* photometricUndist) :
-	photometricUndist(photometricUndist), valid(false), passthrough(false)
+Undistort::Undistort(const char* configFileName, int nPars, std::string prefix) :
+	photometricUndist(), valid(false), passthrough(false)
 {
 	remapX = 0;
 	remapY = 0;
@@ -1093,8 +1093,8 @@ Undistort::Undistort(const char* configFileName, int nPars, std::string prefix, 
 
 }
 
-Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, int outWidth, int outHeight, PhotometricUndistorter* photometricUndist) :
-	photometricUndist(photometricUndist), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
+Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, int outWidth, int outHeight) :
+	photometricUndist(), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
 {
 	remapX = 0;
 	remapY = 0;
@@ -1218,8 +1218,8 @@ Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, in
 	std::cout << K << "\n\n";
 }
 
-Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight, PhotometricUndistorter* photometricUndist) :
-	photometricUndist(photometricUndist), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
+Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight) :
+	photometricUndist(), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
 {
 	remapX = 0;
 	remapY = 0;
@@ -1328,20 +1328,18 @@ UndistortFOV::UndistortFOV(
 	double fx, double fy, double cx, double cy, double omega,
 	int in_width, int in_height,
 	int rectification_mode,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rectification_mode, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rectification_mode, out_width, out_height)
 {
 }
 UndistortFOV::UndistortFOV(
 	double fx, double fy, double cx, double cy, double omega,
 	int in_width, int in_height,
 	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
 {
 }
 UndistortFOV::~UndistortFOV()
@@ -1409,20 +1407,18 @@ UndistortRadTan::UndistortRadTan(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
 	int rectification_mode,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height)
 {
 }
 UndistortRadTan::UndistortRadTan(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
 	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
 {
 }
 UndistortRadTan::~UndistortRadTan()
@@ -1497,20 +1493,18 @@ UndistortEquidistant::UndistortEquidistant(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
 	int rectification_mode,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height)
 {
 }
 UndistortEquidistant::UndistortEquidistant(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
 	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
 {
 }
 UndistortEquidistant::~UndistortEquidistant()
@@ -1584,20 +1578,18 @@ UndistortKB::UndistortKB(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
 	int rectification_mode,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rectification_mode, out_width, out_height)
 {
 }
 UndistortKB::UndistortKB(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
 	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
 {
 }
 UndistortKB::~UndistortKB()
@@ -1678,20 +1670,18 @@ UndistortPinhole::UndistortPinhole(
 	double fx, double fy, double cx, double cy,
 	int in_width, int in_height,
 	int rectification_mode,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rectification_mode, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rectification_mode, out_width, out_height)
 {
 }
 UndistortPinhole::UndistortPinhole(
 	double fx, double fy, double cx, double cy,
 	int in_width, int in_height,
 	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
-	int out_width, int out_height,
-	PhotometricUndistorter* photometricUndist
+	int out_width, int out_height
 ) :
-	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height, photometricUndist)
+	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
 {
 }
 UndistortPinhole::~UndistortPinhole()
