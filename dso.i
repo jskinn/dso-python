@@ -10,6 +10,7 @@
 //using namespace dso;
 %}
 
+%include <exception.i>
 %include <pyabc.i>
 %include <std_string.i>
 %include <std_vector.i>
@@ -71,6 +72,16 @@
 %ignore dso::FullSystem::marginalizeFrame;
 %ignore dso::FullSystem::setOriginalCalib;
 %rename dso::FullSystem DSOSystem;
+
+// Handle exceptions in the constructor. API could be better.
+// see https://stackoverflow.com/questions/1394484/how-do-i-propagate-c-exceptions-to-python-in-a-swig-wrapper-library
+%exception { 
+    try {
+        $action
+    } catch (...) {
+        SWIG_exception(SWIG_RuntimeError, "Exception, see std::err for details");
+    }
+}
 
 // Import the headers
 %include "src/util/ImageAndExposure.h"
