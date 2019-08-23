@@ -2,9 +2,12 @@
 %{
 #define SWIG_FILE_WITH_INIT
 #include <Eigen/Core>
+#include "src/util/NumType.h"
 #include "src/util/MinimalImage.h"
 #include "src/util/ImageAndExposure.h"
 #include "src/util/Undistort.h"
+#include "src/FullSystem/HessianBlocks.h"
+#include "src/util/FrameShell.h"
 #include "src/IOWrapper/Output3DWrapper.h"
 #include "src/FullSystem/FullSystem.h"
 //using namespace dso;
@@ -17,12 +20,23 @@
 
 // Templates for the vectors we use
 %template (VecFloat) std::vector<float>;
+%template (PointVec) std::vector<dso::PointHessian*>;
+%template (OutputVec) std::vector<dso::IOWrap::Output3DWrapper*>;
 
-// handle numpy
+// handle numpy and Eigen
 %include numpy.i
 %init %{
   import_array();
 %}
+%include eigen.i
+
+// Fudge some eigen includes for SWIG
+#ifndef EIGEN_STRONG_INLINE
+#define EIGEN_STRONG_INLINE inline
+#endif
+#ifndef EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#define EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif
 
 // Typemapping for numpy arrays to char pointer arrays
 %apply (unsigned char* IN_ARRAY2, int DIM1, int DIM2) {
@@ -33,10 +47,122 @@
 }
 
 // Always ignore the Eigen macro, it's not actually a method, but SWIG picks it up
-%ignore EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-%ignore dso::ImageAndExposure::EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-%ignore dso::Undistort::EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-%ignore dso::FullSystem::EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+// %ignore EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+// %ignore dso::ImageAndExposure::EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+// %ignore dso::Undistort::EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+// %ignore dso::FullSystem::EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+// Ignore extra types in the HessianBlocks header
+%ignore dso::affFromTo;
+%ignore SCALE_IDEPTH;
+%ignore SCALE_XI_ROT;
+%ignore SCALE_XI_TRANS;
+%ignore SCALE_F;
+%ignore SCALE_C;
+%ignore SCALE_W;
+%ignore SCALE_A;
+%ignore SCALE_B;
+%ignore SCALE_IDEPTH_INVERSE;
+%ignore SCALE_XI_ROT_INVERSE;
+%ignore SCALE_XI_TRANS_INVERSE;
+%ignore SCALE_F_INVERSE;
+%ignore SCALE_C_INVERSE;
+%ignore SCALE_W_INVERSE;
+%ignore SCALE_A_INVERSE;
+%ignore SCALE_B_INVERSE;
+%ignore dso::FrameFramePrecalc;
+
+// Ignore a bunch of the FrameHessian properties
+%ignore dso::FrameHessian::efFrame;
+%ignore dso::FrameHessian::instanceCounter;
+%ignore dso::FrameHessian::dI;
+%ignore dso::FrameHessian::dIp;
+%ignore dso::FrameHessian::absSquaredGrad;
+%ignore dso::FrameHessian::worldToCam_evalPT;
+%ignore dso::FrameHessian::state_zero;
+%ignore dso::FrameHessian::state_scaled;
+%ignore dso::FrameHessian::state;
+%ignore dso::FrameHessian::step;
+%ignore dso::FrameHessian::step_backup;
+%ignore dso::FrameHessian::state_backup;
+%ignore dso::FrameHessian::targetPrecalc;
+%ignore dso::FrameHessian::debugImage;
+
+// Ignore setters for FrameHessian properties, for now they are immutable externally
+%ignore dso::FrameHessian::setStateZero;
+%ignore dso::FrameHessian::setState;
+%ignore dso::FrameHessian::setStateScaled;
+%ignore dso::FrameHessian::setEvalPT;
+%ignore dso::FrameHessian::setEvalPT_scaled;
+%ignore dso::FrameHessian::release;
+%ignore dso::FrameHessian::makeImages;
+
+// Mark other properties read-only
+%immutable dso::FrameHessian::shell;
+%immutable dso::FrameHessian::frameID;
+%immutable dso::FrameHessian::idx;
+%immutable dso::FrameHessian::frameEnergyTH;
+%immutable dso::FrameHessian::ab_exposure;
+%immutable dso::FrameHessian::flaggedForMarginalization;
+%immutable dso::FrameHessian::pointHessians;
+%immutable dso::FrameHessian::pointHessiansMarginalized;
+%immutable dso::FrameHessian::pointHessiansOut;
+%immutable dso::FrameHessian::immaturePoints;
+%immutable dso::FrameHessian::nullspaces_pose;
+%immutable dso::FrameHessian::nullspaces_affine;
+%immutable dso::FrameHessian::nullspaces_scale;
+%immutable dso::FrameHessian::PRE_worldToCam;
+%immutable dso::FrameHessian::PRE_camToWorld;
+
+// Ignore instanceCounter and setters for CalibHessian
+%ignore dso::CalibHessian::instanceCounter;
+%ignore dso::CalibHessian::setValue;
+%ignore dso::CalibHessian::setValueScaled;
+
+// Prevent setters for CalibHessian properties
+%immutable dso::CalibHessian::value_zero;
+%immutable dso::CalibHessian::value_scaled;
+%immutable dso::CalibHessian::value_scaledf;
+%immutable dso::CalibHessian::value_scaledi;
+%immutable dso::CalibHessian::value;
+%immutable dso::CalibHessian::step;
+%immutable dso::CalibHessian::step_backup;
+%immutable dso::CalibHessian::value_backup;
+%immutable dso::CalibHessian::value_minus_value_zero;
+
+// Hide PointHessian properties and setters
+%ignore dso::PointHessian::instanceCounter;
+%ignore dso::PointHessian::efPoint;
+%ignore dso::PointHessian::residuals;
+%ignore dso::PointHessian::lastResiduals;
+%ignore dso::PointHessian::setPointStatus;
+%ignore dso::PointHessian::setIdepth;
+%ignore dso::PointHessian::setIdepthScaled;
+%ignore dso::PointHessian::setIdepthZero;
+%ignore dso::PointHessian::release;
+
+// Make the visible PointHessian properties immutable
+%immutable dso::PointHessian::color;
+%immutable dso::PointHessian::weights;
+%immutable dso::PointHessian::u;
+%immutable dso::PointHessian::v;
+%immutable dso::PointHessian::idx;
+%immutable dso::PointHessian::energyTH;
+%immutable dso::PointHessian::host;
+%immutable dso::PointHessian::hasDepthPrior;
+%immutable dso::PointHessian::my_type;
+%immutable dso::PointHessian::idepth_scaled;
+%immutable dso::PointHessian::idepth_zero_scaled;
+%immutable dso::PointHessian::idepth_zero;
+%immutable dso::PointHessian::idepth;
+%immutable dso::PointHessian::step;
+%immutable dso::PointHessian::step_backup;
+%immutable dso::PointHessian::idepth_backup;
+%immutable dso::PointHessian::nullspaces_scale;
+%immutable dso::PointHessian::idepth_hessian;
+%immutable dso::PointHessian::maxRelBaseline;
+%immutable dso::PointHessian::numGoodResiduals;
+%immutable dso::PointHessian::status;
 
 // Hide the image pointer in ImageAndExposure
 %ignore dso::ImageAndExposure::image;
@@ -87,7 +213,16 @@
     }
 }
 
+// Include some structs from HessianBlocks and NumType to pass data in and out
+//extern struct AffLight;
+//extern struct FrameHessian;
+//extern struct CalibHessian;
+//extern struct PointHessian;
+
 // Import the headers
+%include "src/util/NumType.h"
+%include "src/util/FrameShell.h"
+%include "src/FullSystem/HessianBlocks.h"
 %include "src/util/ImageAndExposure.h"
 %include "src/util/Undistort.h"
 %include "src/IOWrapper/Output3DWrapper.h"
