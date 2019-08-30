@@ -35,6 +35,7 @@ MANIFEST
 
 # SWIG outputs
 dso.py
+dso_wrap.h
 dso_wrap.cpp
 
 # Third party outputs
