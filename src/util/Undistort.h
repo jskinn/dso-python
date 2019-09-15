@@ -43,6 +43,7 @@ class PhotometricUndistorter
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	PhotometricUndistorter(std::string file, std::string noiseImage, std::string vignetteImage, int w_, int h_);
+	PhotometricUndistorter(int width, int height);
 	PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImageB* vignette_image);
 	PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image);
 	~PhotometricUndistorter();
@@ -86,6 +87,7 @@ public:
 	static Undistort* getUndistorterForFile(std::string configFilename, std::string gammaFilename, std::string vignetteFilename);
 
 	void loadPhotometricCalibration(std::string file, std::string noiseImage, std::string vignetteImage);
+	void setNoPhotometricCalibration();
 	void makePhotometricCalibration(std::vector<float> gamma, MinimalImageB* vignette_image);
 	void makePhotometricCalibration(std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image);
 

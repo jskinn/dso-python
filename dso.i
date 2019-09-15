@@ -11,6 +11,7 @@
 #include "src/util/FrameShell.h"
 #include "src/IOWrapper/Output3DWrapper.h"
 #include "src/FullSystem/FullSystem.h"
+#include "src/settings_conf.h"
 //using namespace dso;
 %}
 
@@ -263,6 +264,7 @@
 %include "src/util/FrameShell.h"
 %include "src/FullSystem/HessianBlocks.h"
 %include "src/util/ImageAndExposure.h"
+%include "src/settings_conf.h"
 %include "src/util/Undistort.h"
 %include "src/IOWrapper/Output3DWrapper.h"
 %include "src/FullSystem/FullSystem.h"

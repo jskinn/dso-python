@@ -177,6 +177,11 @@ PhotometricUndistorter::PhotometricUndistorter(
 	printf("Successfully read photometric calibration!\n");
 	valid = true;
 }
+PhotometricUndistorter::PhotometricUndistorter(int width, int height) :
+	output(new ImageAndExposure(width, height)), w(width), h(height), valid(false), vignetteMap(0), vignetteMapInv(0)
+{
+
+}
 PhotometricUndistorter::PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImageB* vignette_image) :
 	output(new ImageAndExposure(width, height)), w(width), h(height), valid(false)
 {
@@ -518,13 +523,26 @@ void Undistort::loadPhotometricCalibration(std::string file, std::string noiseIm
 	photometricUndist = std::make_shared<PhotometricUndistorter>(file, noiseImage, vignetteImage,getOriginalSize()[0], getOriginalSize()[1]);
 }
 
+void Undistort::setNoPhotometricCalibration()
+{
+	photometricUndist = std::make_shared<PhotometricUndistorter>(getOriginalSize()[0], getOriginalSize()[1]);
+}
+
 void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImageB* vignette_image)
 {
+	if (setting_photometricCalibration == 0)
+	{
+		printf("Warning: configured photometric calibration, but it is disabled in setings, and won't be used");
+	}
 	photometricUndist = std::make_shared<PhotometricUndistorter>(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
 }
 
 void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image)
 {
+	if (setting_photometricCalibration == 0)
+	{
+		printf("Warning: configured photometric calibration, but it is disabled in setings, and won't be used");
+	}
 	photometricUndist = std::make_shared<PhotometricUndistorter>(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
 }
 
@@ -1094,7 +1112,8 @@ Undistort::Undistort(const char* configFileName, int nPars, std::string prefix) 
 }
 
 Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, int outWidth, int outHeight) :
-	photometricUndist(), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
+	photometricUndist(std::make_shared<PhotometricUndistorter>(wOrg, hOrg)),
+	w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
 {
 	remapX = 0;
 	remapY = 0;
@@ -1219,7 +1238,8 @@ Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, in
 }
 
 Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight) :
-	photometricUndist(), w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
+	photometricUndist(std::make_shared<PhotometricUndistorter>(wOrg, hOrg)),
+	w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
 {
 	remapX = 0;
 	remapY = 0;
