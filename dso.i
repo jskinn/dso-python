@@ -15,6 +15,8 @@
 //using namespace dso;
 %}
 
+%feature("autodoc", "2");
+
 %include <exception.i>
 %include <pyabc.i>
 %include <std_shared_ptr.i>
@@ -209,8 +211,8 @@
 %ignore dso::PhotometricUndistorter::PhotometricUndistorter(int width, int height, std::vector<float> gamma, MinimalImage<unsigned short>* vignette_image);
 
 // Tweak the Undistort API
-%ignore dso::Undistort::getK;
-%ignore dso::Undistort::getSize;
+//%ignore dso::Undistort::getK;
+//%ignore dso::Undistort::getSize;
 %ignore dso::Undistort::getOriginalParameter;
 %ignore dso::Undistort::getOriginalSize;
 %ignore dso::Undistort::photometricUndist;

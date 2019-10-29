@@ -32,6 +32,7 @@
 #include <iterator>
 #include "util/settings.h"
 #include "util/globalFuncs.h"
+#include "util/globalCalib.h"
 #include "IOWrapper/ImageDisplay.h"
 #include "IOWrapper/ImageRW.h"
 #include "util/Undistort.h"
@@ -325,7 +326,6 @@ PhotometricUndistorter::~PhotometricUndistorter()
 	delete output;
 }
 
-
 void PhotometricUndistorter::unMapFloatImage(float* image)
 {
 	int wh=w*h;
@@ -544,6 +544,13 @@ void Undistort::makePhotometricCalibration(std::vector<float> gamma, MinimalImag
 		printf("Warning: configured photometric calibration, but it is disabled in setings, and won't be used");
 	}
 	photometricUndist = std::make_shared<PhotometricUndistorter>(getOriginalSize()[0], getOriginalSize()[1], gamma, vignette_image);
+}
+
+void Undistort::applyGlobalConfig() const
+{
+	Eigen::Matrix3f K = this->getK().cast<float>();
+	Eigen::Vector2i size = this->getSize();
+	setGlobalCalib(size[0], size[1], K);
 }
 
 template<typename T>
