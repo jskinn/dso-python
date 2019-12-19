@@ -1244,7 +1244,7 @@ Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, in
 	std::cout << K << "\n\n";
 }
 
-Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight) :
+Undistort::Undistort(int wOrg, int hOrg, VecX parsOrg, float rectFx, float rectFy, float rectCx, float rectCy, int outWidth, int outHeight) :
 	photometricUndist(std::make_shared<PhotometricUndistorter>(wOrg, hOrg)),
 	w(outWidth), h(outHeight), wOrg(wOrg), hOrg(hOrg), wUp(0), hUp(0), upsampleUndistFactor(0), parsOrg(parsOrg), valid(false), passthrough(false)
 {
@@ -1363,7 +1363,7 @@ UndistortFOV::UndistortFOV(
 UndistortFOV::UndistortFOV(
 	double fx, double fy, double cx, double cy, double omega,
 	int in_width, int in_height,
-	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	float rect_fx, float rect_fy, float rect_cx, float rect_cy,
 	int out_width, int out_height
 ) :
 	Undistort(in_width, in_height, UndistortFOV::makeParams(fx, fy, cx, cy, omega), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
@@ -1442,7 +1442,7 @@ UndistortRadTan::UndistortRadTan(
 UndistortRadTan::UndistortRadTan(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
-	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	float rect_fx, float rect_fy, float rect_cx, float rect_cy,
 	int out_width, int out_height
 ) :
 	Undistort(in_width, in_height, UndistortRadTan::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
@@ -1528,7 +1528,7 @@ UndistortEquidistant::UndistortEquidistant(
 UndistortEquidistant::UndistortEquidistant(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
-	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	float rect_fx, float rect_fy, float rect_cx, float rect_cy,
 	int out_width, int out_height
 ) :
 	Undistort(in_width, in_height, UndistortEquidistant::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
@@ -1613,7 +1613,7 @@ UndistortKB::UndistortKB(
 UndistortKB::UndistortKB(
 	double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2,
 	int in_width, int in_height,
-	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	float rect_fx, float rect_fy, float rect_cx, float rect_cy,
 	int out_width, int out_height
 ) :
 	Undistort(in_width, in_height, UndistortKB::makeParams(fx, fy, cx, cy, k1, k2, r1, r2), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)
@@ -1705,7 +1705,7 @@ UndistortPinhole::UndistortPinhole(
 UndistortPinhole::UndistortPinhole(
 	double fx, double fy, double cx, double cy,
 	int in_width, int in_height,
-	int rect_fx, int rect_fy, int rect_cx, int rect_cy,
+	float rect_fx, float rect_fy, float rect_cx, float rect_cy,
 	int out_width, int out_height
 ) :
 	Undistort(in_width, in_height, UndistortPinhole::makeParams(fx, fy, cx, cy), rect_fx, rect_fy, rect_cx, rect_cy, out_width, out_height)

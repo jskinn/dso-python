@@ -106,7 +106,7 @@ protected:
 
 	// Construct from existing parameters
 	Undistort(int wOrg, int hOrg, VecX parsOrg, int rectificationMode, int outWidth, int outHeight);
-	Undistort(int wOrg, int hOrg, VecX parsOrg, int rectFx, int rectFy, int rectCx, int rectCy, int outWidth, int outHeight);
+	Undistort(int wOrg, int hOrg, VecX parsOrg, float rectFx, float rectFy, float rectCx, float rectCy, int outWidth, int outHeight);
 
     int w, h, wOrg, hOrg, wUp, hUp;
     int upsampleUndistFactor;
@@ -134,7 +134,7 @@ public:
 
 	// Create from existing parameters
 	UndistortFOV(double fx, double fy, double cx, double cy, double omega, int in_width, int in_height, int rectification_mode, int out_width, int out_height);
-	UndistortFOV(double fx, double fy, double cx, double cy, double omega, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height);
+	UndistortFOV(double fx, double fy, double cx, double cy, double omega, int in_width, int in_height, float rect_fx, float rect_fy, float rect_cx, float rect_cy, int out_width, int out_height);
 
 	~UndistortFOV();
 	void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
@@ -154,7 +154,7 @@ public:
 
 	// Create from existing parameters
 	UndistortRadTan(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rectification_mode, int out_width, int out_height);
-	UndistortRadTan(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height);
+	UndistortRadTan(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, float rect_fx, float rect_fy, float rect_cx, float rect_cy, int out_width, int out_height);
 
     ~UndistortRadTan();
     void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
@@ -173,7 +173,7 @@ public:
 
 	// Create from existing parameters
 	UndistortEquidistant(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rectification_mode, int out_width, int out_height);
-	UndistortEquidistant(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height);
+	UndistortEquidistant(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, float rect_fx, float rect_fy, float rect_cx, float rect_cy, int out_width, int out_height);
 
 	~UndistortEquidistant();
     void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
@@ -192,7 +192,7 @@ public:
 
 	// Create from existing parameters
 	UndistortPinhole(double fx, double fy, double cx, double cy, int in_width, int in_height, int rectification_mode, int out_width, int out_height);
-	UndistortPinhole(double fx, double fy, double cx, double cy, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height);
+	UndistortPinhole(double fx, double fy, double cx, double cy, int in_width, int in_height, float rect_fx, float rect_fy, float rect_cx, float rect_cy, int out_width, int out_height);
 	~UndistortPinhole();
 	void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
 
@@ -213,7 +213,7 @@ public:
 
 	// Create from existing parameters
 	UndistortKB(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rectification_mode, int out_width, int out_height);
-	UndistortKB(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, int rect_fx, int rect_fy, int rect_cx, int rect_cy, int out_width, int out_height);
+	UndistortKB(double fx, double fy, double cx, double cy, double k1, double k2, double r1, double r2, int in_width, int in_height, float rect_fx, float rect_fy, float rect_cx, float rect_cy, int out_width, int out_height);
 	~UndistortKB();
 	void distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const;
 
