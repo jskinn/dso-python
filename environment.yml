@@ -1,0 +1,11 @@
+name: dso-swig
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python
+  - swig
+  - opencv
+  - eigen
+  - suitesparse
+  - boost
